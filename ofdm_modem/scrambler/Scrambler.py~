@@ -1,0 +1,42 @@
+#!/usr/bin/python3
+#
+# PRBS through multiplicative scrambler
+#
+# Author: Greyson Mitra
+# Date: 2021-05-20
+#
+
+import numpy as np
+
+class Scrambler:
+
+    def __init__(self):
+        self.shiftReg = 0
+        
+
+    # bitStream will be a 1D array.   
+    def scramble(self, bitStream):
+        out = np.zeros((bitStream.size,), dtype=int) # Create scrambled output array same length as input array
+        
+        for i in range(out.size):
+            #tap1 = self.shiftReg & (1 << 5) # tap1 is just the 18th bit of shiftReg. Extrac by and-ing with 1-bit shifted 18 times to the right
+            tap1 = (self.shiftReg >> 5) & 1 #Select 17th bit of shiftReg and isolate/extract it by essentially shifting it to the 2^0 position and anding with 1 (which is equal to 2^0)
+            #print(bin(1<<5))
+            tap2 = self.shiftReg & (1 << 0) # tap2 is the 23rd bit of shiftReg
+            #print('tap1: ' + bin(tap1) + ', tap2: ' + bin(tap2))
+            tapsXOR = tap1 ^ tap2 # Compute bitwise XOR of the two taps
+            #print('XOR of the taps: ' + bin(tapsXOR))
+            out[i] = bitStream[i] ^ tapsXOR # Compute XOR of above result and input bit
+            #print('output: ', out[i])
+
+            self.shiftReg = self.shiftReg >> 1 # Shift register moves all bits right one position in prep for the next iteration of scrambling
+            self.shiftReg = self.shiftReg | (out[i] << 22) # Shift the output into the first/leftmost spot of the shiftReg
+            #print('shifted out: ' + bin(out[i] << 22) + ', shiftReg: ' + bin(self.shiftReg))
+
+            #self.shiftReg = self.shiftReg >> 1 # Shift register moves all bits right one position in prep for the next iteration of scrambling
+
+            #print('shiftReg: ' + bin(self.shiftReg) + '\n')
+
+        return out
+            
+    

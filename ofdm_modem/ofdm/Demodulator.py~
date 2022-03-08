@@ -1,0 +1,47 @@
+#!/usr/bin/python3
+#
+# Discrete Fourier transform through FFT algorithm
+#
+# Author: Greyson Mitra
+# Date: 2021-05-27
+#
+
+import numpy as np
+
+class DFT_demodulator:
+
+    def __init__(self, subcarrierTotal, usedSubcarriers, emptySubcarriers):
+        self.subcarrierTotal = subcarrierTotal
+        self.usedSubcarriers = usedSubcarriers
+        self.emptySubcarriers = emptySubcarriers
+        
+
+    # complexArr will be a 1D complex array.   
+    def dft_demod(self, complexArr):
+        tform = np.fft.fft(complexArr)
+
+
+        
+        #originalSymbolsCount = self.subcarrierTotal - 16
+
+        #resized = np.zeros((originalSymbolsCount,), dtype=complex)
+        #for i in range(originalSymbolsCount): # Remove the empty subcarriers by starting loop at first nonzero subcarrier and run for number of original symbols (240) given by modulation mapper
+        #    resized[i] = complexArr[i+8]
+
+        #undoTform = np.fft.fft(resized) # undo the IDFT (IFFT) with DFT (FFT)
+        
+        print('undone IDFT: %r'%tform)
+
+        
+        #originalSymbolsCount = self.subcarrierCount - 16
+        #symbolsReversed = np.zeros((originalSymbolsCount,), dtype=complex)
+        #for i in range(originalSymbolsCount): # Remove the empty subcarriers by starting loop at first nonzero subcarrier and for number of original symbols (240) given by modulation mapper
+        #    symbolsReversed[i] = undoTform[i+8]
+
+        out = np.zeros((self.usedSubcarriers,), dtype=complex)
+        for i in range(out.size): # Rearrange the symbols to produce the correct order to symbols as they were sent into the IDFT unit
+            out[i] = tform[-120+i] #symbolsReversed[-120+i]
+
+        #print('DFT nums: %r'%out)
+
+        return out

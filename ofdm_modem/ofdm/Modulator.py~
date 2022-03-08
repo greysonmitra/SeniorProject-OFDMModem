@@ -1,0 +1,48 @@
+#!/usr/bin/python3
+#
+# Inverse discrete Fourier transform through IFFT algorithm
+#
+# Author: Greyson Mitra
+# Date: 2021-05-26
+#
+
+import numpy as np
+
+class IDFT_modulator:
+
+    def __init__(self, subcarrierTotal, usedSubcarriers, emptySubcarriers):
+        self.subcarrierTotal = subcarrierTotal
+        self.usedSubcarriers = usedSubcarriers
+        self.emptySubcarriers = emptySubcarriers
+        
+
+    # complexArr will be a 1D complex array.   
+    def idft_mod(self, complexArr):
+        untformed = np.zeros((self.subcarrierTotal,), dtype=complex)
+
+        for i in range(complexArr.size):
+            untformed[-120+i] = complexArr[i] # Rearrange QPSK symbols so that the first symbol goes to subcarrier -120 and last goes to 119
+
+        invTformed = np.fft.ifft(untformed)
+        
+        #transformed = np.fft.ifft(complexArr)
+
+        print('untransformed: %r'%untformed)
+        print('Inv transformed: %r'%invTformed)
+
+        
+        #out = np.zeros((self.subcarrierCount,), dtype=complex) # Array of length 256 to fit in 240 filled subcarriers and 16 empty ones to avoid interference
+
+        #for i in range(tformed.size): # Add empty subcarriers to avoid self-interference
+        #    out[i+8] = tformed[i]
+
+
+        # Start with first input at -120 and last at 119
+        #for i in range(transformed.size):
+            #print('i: %r'%i)
+            #out[-120+i] = transformed[i]
+
+        #print('IDFT bits: %r'%out)
+
+        return invTformed
+            

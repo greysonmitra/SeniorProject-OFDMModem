@@ -1,0 +1,102 @@
+#!/usr/bin/python3
+#
+# Plots
+#
+# Author: Greyson Mitra
+# Date: 2021-05-26
+
+
+import numpy as np
+import argparse
+import matplotlib as mpl
+
+import scrambler.Scrambler
+import scrambler.Descrambler
+import modulation.Mapper
+import modulation.Demapper
+import ofdm.Modulator
+import ofdm.Demodulator
+
+if __name__ == '__main__':
+
+  nProc = 1000 # Number of items to generate per processing loop iteration
+
+  # Parse command line inputs
+  parser = argparse.ArgumentParser(description='Base OFDM modulator code')
+  parser.add_argument('-v','--verbose',action='store_true',help='Print verbose output to stdout')
+  parser.add_argument('-f','--filename')
+  args = parser.parse_args()
+  print('args: ',args)
+  verbose = args.verbose
+  writeFile = False
+  if args.filename != None:
+    writeFile = True
+
+  # Open output file if requested
+  oFile = None
+  if writeFile:
+    oFile = open(args.filename,'wb')
+
+  # print('SLT DEVELOPMENT NOTES: Probably want to get rid of "import time"')
+  # The try-except-finally clause allows us to hit ctrl-c on the keyboard to
+  # quit and exit gracefully, e.g., by closing open files etc.
+  try:
+    
+    scram = scrambler.Scrambler.Scrambler(2**0+2**5, 23) #Init scrambler object
+    descram = scrambler.Descrambler.Descrambler(2**0+2**5, 23)
+
+    mapper = modulation.Mapper.Mapper()
+    demapper = modulation.Demapper.Demapper()
+
+    idft_mod_unit = ofdm.Modulator.Modulator(256, 240, 16)
+    dft_demod_unit = ofdm.Demodulator.Demodulator(256, 240, 16)
+
+    
+    # This is the processing loop
+    while True:
+      # Generate nProc random bits. randint generates uniformly distributed
+      # integers between [0,2), i.e., 2 is not included. This is common in
+      # python that the upper range value is not included.
+      #bits = np.random.randint(0,2,nProc,dtype=np.int8)
+
+
+
+
+      prbs = scram.scramble(np.ones((480,), dtype=int)) #give 1D array to scrambler object to scramble... 480 bits so 240 mapped symbols and then 256 IDFT subcarriers
+      #print('scrambled bits: %r'%prbs)
+
+      mapMod = mapper.map(prbs)
+
+      #Test IDFT and DFT units with scramblers and modulation mapping
+      tformedSignal = idft_mod_unit.idft_mod(mapMod)
+      prefixed = idft_mod_unit.add_prefix(tformedSignal, 18)
+      trimmed = dft_demod_unit.rm_prefix(prefixed, 18)
+      
+      untformedSignal = dft_demod_unit.dft_demod(trimmed)
+      mapDemod = demapper.demap(untformedSignal)
+      prbsSink = descram.descramble(mapDemod)
+
+
+      print('Descrambled bits: %r'%prbsSink)
+
+      error = prbs.size - np.count_nonzero(prbsSink) 
+      print('error: ', error)
+
+
+      
+      if writeFile:
+        oFile.write(bits)
+      if verbose:
+        print('bits: %r'%bits)
+      
+      # This part is not needed other than to slow things down for us humans.
+      print('Sleeping...')
+      time.sleep(15.0)
+  except KeyboardInterrupt as e:
+    print('I caught the keyboard interrupt: ',e)
+  finally:
+    print('Finally done')
+    if writeFile:
+      if not oFile.closed:
+        print('Need to close the file')
+        oFile.close()

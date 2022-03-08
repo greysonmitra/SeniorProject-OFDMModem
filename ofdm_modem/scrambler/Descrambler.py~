@@ -1,0 +1,32 @@
+#!/usr/bin/python3
+#
+# PRBS sink through multiplicative descrambler
+#
+# Author: Greyson Mitra
+# Date: 2021-05-21
+#
+
+import numpy as np
+
+class Descrambler:
+
+    def __init__(self):
+        self.shiftReg = 0
+
+        #shiftReg = 0
+        
+
+    #bitStream will be a 1D array.   
+    def descramble(self, bitStream):
+        out = np.zeros((bitStream.size,), dtype=int) #Init output, zeros for now
+        for i in range(out.size):
+            tap1 = (self.shiftReg >> 5) & 1 
+            tap2 = self.shiftReg & (1 << 0)
+            tapsXOR = tap1 ^ tap2
+            out[i] = bitStream[i] ^ tapsXOR #Same taps and output as scrambler
+
+            self.shiftReg = self.shiftReg >> 1 #Shift register moves all bits right one position in prep for the next iteration of scrambling
+            self.shiftReg = self.shiftReg | (bitStream[i] << 22) #Shift the output into the first/leftmost spot of the shiftReg
+
+            #self.shiftReg = self.shiftReg >> 1 #Shift register moves all bits right one position in prep for the next iteration of scrambling
+        return out
