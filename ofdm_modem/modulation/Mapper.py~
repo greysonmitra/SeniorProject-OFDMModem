@@ -1,0 +1,42 @@
+#!/usr/bin/python3
+#
+# Modulation mapper through QPSK
+#
+# Author: Greyson Mitra
+# Date: 2021-05-24
+#
+
+import numpy as np
+import cmath as cm
+
+class Mapper:
+
+    #def __init__(self):
+        
+
+    # bitStream will be a 1D array. Map bits in groups of 2 to complex exp's 
+    def map(self, bitStream):
+        parity = bitStream.size % 2
+        outLength = int(bitStream.size/2) #Cast to int because get float when dividing??
+        if parity == 0: #Input bit array is even, create output array half length of input array
+            out = np.zeros((outLength,), dtype=complex)
+        else: #Input bit array is odd so add 1 more element space(?)
+            out = np.zeros((outLength+1,), dtype=complex)
+
+        bitIndex1 = 0
+        bitIndex2 = 1
+        
+        for i in range(out.size):
+            if (bitStream[bitIndex1]==0) and (bitStream[bitIndex2]==0):
+                out[i] = cm.exp(1j*((cm.pi)/4))
+            elif (bitStream[bitIndex1]==0) and (bitStream[bitIndex2]==1):
+                out[i] = cm.exp(1j*7*((cm.pi)/4))
+            elif (bitStream[bitIndex1]==1) and (bitStream[bitIndex2]==0):
+                out[i] = cm.exp(1j*3*((cm.pi)/4))
+            else: #bit pattern 11
+                out[i] = cm.exp(1j*5*((cm.pi)/4))
+
+            bitIndex1 += 2
+            bitIndex2 += 2
+
+        return out

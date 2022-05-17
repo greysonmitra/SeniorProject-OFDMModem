@@ -1,0 +1,96 @@
+#!/usr/bin/python3
+#
+# Generic streaming transmitter template.
+#
+# Author: SLT
+# Date: 20210505
+#
+
+import numpy as np
+import argparse
+import time
+import scrambler.Scrambler
+import scrambler.Descrambler
+import modulation.Mapper
+import modulation.Demapper
+
+if __name__ == '__main__':
+
+  nProc = 1000 # Number of items to generate per processing loop iteration
+
+  # Parse command line inputs
+  parser = argparse.ArgumentParser(description='Base OFDM modulator code')
+  parser.add_argument('-v','--verbose',action='store_true',help='Print verbose output to stdout')
+  parser.add_argument('-f','--filename')
+  args = parser.parse_args()
+  print('args: ',args)
+  verbose = args.verbose
+  writeFile = False
+  if args.filename != None:
+    writeFile = True
+
+  # Open output file if requested
+  oFile = None
+  if writeFile:
+    oFile = open(args.filename,'wb')
+
+  # print('SLT DEVELOPMENT NOTES: Probably want to get rid of "import time"')
+  # The try-except-finally clause allows us to hit ctrl-c on the keyboard to
+  # quit and exit gracefully, e.g., by closing open files etc.
+  try:
+    # This is the processing loop
+    scram = scrambler.Scrambler.Scrambler(2**0+2**5+2**9, 100) #Init scrambler object
+    descram = scrambler.Descrambler.Descrambler(2**0+2**5+2**9, 100)
+
+    mapper = modulation.Mapper.Mapper()
+    demapper = modulation.Demapper.Demapper()
+
+    while True:
+      # Generate nProc random bits. randint generates uniformly distributed
+      # integers between [0,2), i.e., 2 is not included. This is common in
+      # python that the upper range value is not included.
+      #bits = np.random.randint(0,2,nProc,dtype=np.int8)
+
+
+
+
+      prbs = scram.scramble(np.ones((1000,), dtype=int)) #give 1D array to scrambler object to scramble
+      print('scrambled bits: %r'%prbs)
+
+      #Test modulation mapping/demapping with scrambler/descrambler
+      """mapMod = mapper.map(prbs)
+      mapDemod = demapper.demap(mapMod)
+      prbsSink = descram.descramble(mapDemod)"""
+
+      prbsSink = descram.descramble(prbs)
+
+
+      print('Descrambled bits: %r'%prbsSink)
+
+      error = prbs.size - np.count_nonzero(prbsSink) 
+      print('error: ', error)
+
+      #mapMod = mapper.map(np.ones((1000000,), dtype=int)) #output array of complex numbers
+      #print('mapped modulation: %r'%mapMod)
+
+      #mapDemod = demapper.demap(mapMod) #output of array back to bits again
+      #print('demapped modulation: %r'%mapDemod)
+
+
+      
+      if writeFile:
+        oFile.write(bits)
+      if verbose:
+        print('bits: %r'%bits)
+      
+      # This part is not needed other than to slow things down for us humans.
+      print('Sleeping...')
+      time.sleep(15.0)
+  except KeyboardInterrupt as e:
+    print('I caught the keyboard interrupt: ',e)
+  finally:
+    print('Finally done')
+    if writeFile:
+      if not oFile.closed:
+        print('Need to close the file')
+        oFile.close()
